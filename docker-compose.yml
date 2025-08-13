@@ -1,27 +1,47 @@
-version: '3.8'
 services:
+  nginx:
+    build: ./nginx
+    container_name: nginx-proxy
+    ports:
+      - "8080:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
+
   frontend:
     build: ./frontend
     container_name: frontend
-    ports:
-      - "3000:80"
+    networks:
+      - app-network
 
   backend:
     build: ./backend
     container_name: backend
-    ports:
-      - "5000:5000"
     depends_on:
       - db
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
 
   db:
     build: ./db
-    container_name: db
+    container_name: postgres-db
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
+    environment:
+      - POSTGRES_DB=greetings_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    networks:
+      - app-network
 
 volumes:
   db_data:
+
+networks:
+  app-network:
+    driver: bridge
